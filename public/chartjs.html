@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>Sensors Chart.js</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
+	</head>
+	<body>
+		<div id="status">
+			<p>Recieving data...</p>
+		</div>
+		<div>
+		  <canvas id="myChart"></canvas>
+		</div>
+		<div id="recievedData">
+			<p></p>
+		</div>
+		<script type="text/javascript">
+
+			const params = new URLSearchParams(window.location.search)
+			let count = params.has('count') ? params.get('count') : 100
+			let showData = params.has('show_data')
+			let dataurl = `data/${count}`
+
+			let colors = [{
+				backgroundColor: 'rgb(255, 99, 132)',
+				borderColor: 'rgb(139, 0, 0)',
+			},
+			{
+				backgroundColor: 'rgb(50, 205, 50)',
+				borderColor: 'rgb(0, 100, 0)',
+			},
+			{
+				backgroundColor: 'rgb(50, 104, 168)',
+				borderColor: 'rgb(56, 50, 168)',
+			},
+			{
+				backgroundColor: 'rgb(232, 237, 88)',
+				borderColor: 'rgb(150, 156, 5)',
+			},
+			{
+				backgroundColor: 'rgb(88, 245, 237)',
+				borderColor: 'rgb(3, 107, 102)',
+			},
+			{
+				backgroundColor: 'rgb(154, 71, 237)',
+				borderColor: 'rgb(74, 4, 143)',
+			},
+			{
+				backgroundColor: 'rgb(229, 75, 235)',
+				borderColor: 'rgb(93, 1, 97)',
+			}]
+
+			function onDataReceived(thermdata, statusText, xhr) {
+				if (showData) {
+					document.getElementById('recievedData').innerHTML = JSON.stringify(thermdata, null, 4)
+				}
+				document.getElementById('status').innerHTML = `${count} data points retrieved`
+
+				const data = {datasets: []}
+				Object.keys(thermdata).forEach((item, index) => {
+					data.datasets.push({
+						label: item,
+						backgroundColor: colors[index % colors.length].backgroundColor,
+						borderColor: colors[index % colors.length].borderColor,
+						data: thermdata[item]
+					})
+				})
+
+				const config = {
+					type: 'line',
+					data: data,
+					options: {
+						plugins: {
+							title: {
+								text: 'Room Temperature',
+								display: true
+							}
+						},
+						scales: {
+							x: {
+								type: 'time',
+								time: {
+									displayFormats: {
+										hour: 'DD HH:MM'
+									}
+									// tooltipFormat: 'DD T'
+								},
+								title: {
+									display: true,
+									text: 'Date and time'
+								}
+							},
+							y: {
+								title: {
+									display: true,
+									text: 'Temperature in °C'
+								}
+							}
+						}
+					}
+				}
+
+				const myChart = new Chart(
+					document.getElementById('myChart'),
+					config
+				)
+			}
+
+			function onError(jqXhr, textStatus, errorMessage) {
+				document.getElementById('status').innerHTML = `Failed to retrieve data.</br>HTTP status: ${jqXhr.status}</br>HTTP response: ${jqXhr.responseText}`
+			}
+
+			$.ajax({
+				url: dataurl,
+				type: "GET",
+				dataType: "json",
+				success: onDataReceived,
+				error: onError
+			})
+		</script>
+	</body>
+</html>
