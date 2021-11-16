@@ -1,0 +1,30 @@
+{
+  "name": "sensors-www",
+  "version": "0.0.1",
+  "description": "Show data committed to database by sensors-api.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ladekjaer/sensors-www.git"
+  },
+  "keywords": [
+    "sensors",
+    "ds18b20",
+    "ds18s20",
+    "ds18x20"
+  ],
+  "author": "Rasmus Ladekjær Pedersen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ladekjaer/sensors-www/issues"
+  },
+  "homepage": "https://github.com/ladekjaer/sensors-www#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "pg": "^8.7.1"
+  }
+}
