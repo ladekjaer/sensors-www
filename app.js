@@ -101,16 +101,24 @@ let validateUser = (email, password, callback) => {
 }
 
 app.get('/latest(/:count)?', (req, res) => {
-	let count = req.params.count || 1
-	pool.query('select * from temperature_view order by capture_time desc limit $1::integer', [count], (err, result) => {
-		res.writeHead(200, {
-			'content-type': 'text/plain; charset=utf8'
+	if (req.user) {
+		let count = req.params.count || 1
+		pool.query('select * from temperature_view order by capture_time desc limit $1::integer', [count], (err, result) => {
+			res.writeHead(200, {
+				'content-type': 'text/plain; charset=utf8'
+			})
+			res.end(JSON.stringify(result.rows, null, 4))
 		})
-		res.end(JSON.stringify(result.rows, null, 4))
-	})
+	} else {
+		res.redirect('/login')
+		
+	}
 })
 
 app.get('/data(/:count)?', (req, res) => {
+	if (!req.user) {
+		return res.redirect('/login')
+	}
 	let count = req.params.count || 10
 	const query = {
 		text: `
