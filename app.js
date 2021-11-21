@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser')
 const app = express()
 const { Pool, Query } = require('pg')
 require('dotenv').config()
+const argon2 = require('argon2')
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
@@ -14,7 +15,7 @@ const PORT = process.env.PORT
 const pool = new Pool()
 
 app.use((req, res, next) => {
-	const authToken = req.cookies['AuthToken']  // made possibly by 'cookie-parser'
+	const authToken = req.cookies['AuthToken']
 	req.user = authTokens[authToken]
 	next()
 })
@@ -44,7 +45,7 @@ app.get('/graph', (req, res) => {
 })
 
 app.post('/login', (req, res) => {
-	const { email, password } = req.body // here 'body-parser' saves me some simple code by automatically parsing the post body
+	const { email, password } = req.body
 	validateUser(email, password, (err, user) => {
 		if (user) {
 			console.log(`User ${user.email} logged in`)
@@ -71,20 +72,31 @@ let validateUser = (email, password, callback) => {
 				    , u.email
 				    , u.phone
 				    , r.role
+				    , u.password
 				from
 				    users u
 				    left outer join roles r on u.role_id = r.role_id
 				where
-				    email =  $1::text
-				    and password = $2::text;`,
-		values: [email, password]
+				    email =  $1::text;`,
+		values: [email]
 	}
 	pool.query(query, (err, result) => {
 		if (err) {
 			console.error(err)
 			return callback(err)
 		}
-		return callback(null, result.rows[0])
+
+		let user = result.rows[0]
+
+		argon2.verify(user.password, password).then(correct => {
+			if (correct) {
+				delete user.password
+				console.log(user)
+				return callback(null, user)
+			} else {
+				return callback(null, null)
+			}
+		})
 	})
 }
 
