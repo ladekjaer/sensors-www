@@ -149,8 +149,6 @@ app.get('/data(/:count)?', (req, res) => {
 	})
 })
 
-app.use(express.static('public'))
-
 app.listen(PORT, () => {
 	console.log(`HTTP server listening at http://localhost:${PORT}`)
 })
