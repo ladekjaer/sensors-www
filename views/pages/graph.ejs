@@ -1,23 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 	<head>
-		<meta charset=utf-8>
-		<title>Sensors Chart.js</title>
+		<%- include('../partials/head'); %>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
 		<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
 	</head>
-	<body>
-		<div id="status">
-			<p>Recieving data...</p>
-		</div>
-		<div>
-		  <canvas id="myChart"></canvas>
-		</div>
-		<div id="recievedData">
-			<p></p>
-		</div>
+	<body class="container">
+		<header>
+			<%- include('../partials/header'); %>
+		</header>
+
+		<main>
+			<div class="jumbotron">
+				<div id="status">
+					<p>Recieving data...</p>
+				</div>
+				<div>
+				  <canvas id="myChart"></canvas>
+				</div>
+				<div id="recievedData">
+					<p></p>
+				</div>
+			</div>
+		</main>
+
+		<footer>
+			<%- include('../partials/footer'); %>
+		</footer>
+
 		<script type="text/javascript">
 
 			const params = new URLSearchParams(window.location.search)

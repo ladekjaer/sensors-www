@@ -1,10 +1,92 @@
+const crypto = require('crypto')
 const express = require('express')
+const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
 const app = express()
 const { Pool, Query } = require('pg')
 require('dotenv').config()
 
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(cookieParser())
+app.set('view engine', 'ejs')
+
 const PORT = process.env.PORT
 const pool = new Pool()
+
+app.use((req, res, next) => {
+	const authToken = req.cookies['AuthToken']  // made possibly by 'cookie-parser'
+	req.user = authTokens[authToken]
+	next()
+})
+
+app.get('/', (req, res) => {
+	res.render('pages/index')
+})
+
+app.get('/about', (req, res) => {
+	res.render('pages/about')
+})
+
+app.get('/login', (req, res) => {
+	res.render('pages/login', {message: false})
+})
+
+app.get('/registration', (req, res) => {
+	res.render('pages/registration', {message: false})
+})
+
+app.get('/graph', (req, res) => {
+	if (req.user) {
+		res.render('pages/graph')
+	} else {
+		res.render('pages/login', {message: 'The graph data is password protected. Please login.'})
+	}
+})
+
+app.post('/login', (req, res) => {
+	const { email, password } = req.body // here 'body-parser' saves me some simple code by automatically parsing the post body
+	validateUser(email, password, (err, user) => {
+		if (user) {
+			console.log(`User ${user.email} logged in`)
+			const authToken = generateAuthToken()
+			authTokens[authToken] = user
+			res.cookie('AuthToken', authToken)
+			res.redirect('/graph?count=1000')
+		} else {
+			res.render('pages/login', {message: 'Invalid username or password'})
+		}		
+	})
+})
+
+const authTokens = {} // use other store!
+
+const generateAuthToken = () => {
+	return crypto.randomBytes(30).toString('hex')
+}
+
+let validateUser = (email, password, callback) => {
+	const query = {
+		text: `	select
+				    u.user_id
+				    , u.email
+				    , u.phone
+				    , r.role
+				from
+				    users u
+				    left outer join roles r on u.role_id = r.role_id
+				where
+				    email =  $1::text
+				    and password = $2::text;`,
+		values: [email, password]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			console.error(err)
+			return callback(err)
+		}
+		return callback(null, result.rows[0])
+	})
+}
 
 app.get('/latest(/:count)?', (req, res) => {
 	let count = req.params.count || 1
