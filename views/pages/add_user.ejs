@@ -23,7 +23,7 @@
 					<form method="POST" action="/add_user">
 						<div class="form-group">
 							<label for="emailInput">Email address</label>
-							<input name="email" type="email" class="form-control" id="emailInput" placeholder="Enter email">
+							<input name="email" type="email" class="form-control" id="emailInput" placeholder="Enter email" autofocus>
 						</div>
 						<div class="form-group">
 							<label for="phoneInput">Phone Number</label>
@@ -31,7 +31,7 @@
 						</div>
 						<div class="form-group">
 							<label for="roleInput">Role (user type)</label>
-							<input name="role" type="text" class="form-control" id="roleInput">
+							<input name="role" type="text" class="form-control" id="roleInput" list=roleDatalist placeholder="admin / user">
 						</div>
 						<div class="form-group">
 							<label for="passwordInput">Password</label>
@@ -46,6 +46,11 @@
 
 						<button type="submit" class="btn btn-primary">Login</button>
 					</form>
+
+					<datalist id="roleDatalist">
+						<option value="admin">
+						<option value="user">
+					</datalist>
 				</div>
 			</div>
 		</div>
