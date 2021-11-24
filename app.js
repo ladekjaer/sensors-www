@@ -24,10 +24,6 @@ app.get('/', (req, res) => {
 	res.render('pages/index')
 })
 
-app.get('/about', (req, res) => {
-	res.render('pages/about')
-})
-
 app.get('/login', (req, res) => {
 	res.render('pages/login', {message: false})
 })
