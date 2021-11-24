@@ -32,14 +32,8 @@ app.get('/login', (req, res) => {
 	res.render('pages/login', {message: false})
 })
 
-app.get('/add_user', (req, res) => {
-	if (!req.user) {
-		res.render('pages/login', {
-			message: 'Only logged in user can create new users.'
-		})
-		return
-	}
-	res.render('pages/add_user', {message: false})
+app.get('/registration', (req, res) => {
+	res.render('pages/registration', {message: false})
 })
 
 app.get('/graph', (req, res) => {
@@ -65,60 +59,10 @@ app.post('/login', (req, res) => {
 	})
 })
 
-app.post('/add_user', (req, res) => {
-	if (!req.user) {
-		res.render('pages/login', {
-			message: 'Only logged in user can create new users.'
-		})
-		return
-	}
-	const { email, phone, role, password, confirmPassword } = req.body;
-	if (password !== confirmPassword) {
-		res.render('pages/graph', {message: 'Password does not match.'})
-		return
-	}
-	getHashedPassword(password)
-		.then(hashedPassword => {
-			addUser(email, phone, role, hashedPassword, (err, user_id) => {
-				if (err) {
-					console.error(err)
-				} else {
-					console.log(`New user has id ${user_id}.`)
-					res.render('pages/login', {
-						message: 'Registration Complete. Please login to continue.'
-					})
-				}
-			})
-		})
-})
-
 const authTokens = {} // use other store!
 
 const generateAuthToken = () => {
 	return crypto.randomBytes(30).toString('hex')
-}
-
-const roleConvert = role => {
-	return (role === 'admin') ? 1 : 2
-}
-
-const addUser = (email, phone, role, hashedPassword, callback) => {
-	let role_id = roleConvert(role)
-	const query = {
-		text: `	insert into users
-				(email, phone, role_id, password)
-				values
-				($1::text, $2::text, $3::integer, $4::text)
-				RETURNING user_id`,
-		values: [email, phone, role_id, hashedPassword]
-	}
-	pool.query(query, (err, result) => {
-		if (err) {
-			console.log(err)
-			return callback(err)
-		}
-		return callback(null, result.rows[0].user_id)
-	})
 }
 
 let validateUser = (email, password, callback) => {
@@ -154,17 +98,6 @@ let validateUser = (email, password, callback) => {
 			}
 		})
 	})
-}
-
-const getHashedPassword = async password => {
-	let hash
-	try {
-		hash = await argon2.hash(password)
-	} catch (err) {
-		console.error(err)
-		return err
-	}
-	return hash
 }
 
 app.get('/latest(/:count)?', (req, res) => {
