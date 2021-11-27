@@ -1,21 +1,36 @@
 const crypto = require('crypto')
 const express = require('express')
 const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
 const app = express()
 const { Pool, Query } = require('pg')
 require('dotenv').config()
 const argon2 = require('argon2')
+const session = require('express-session')
+const sessionStore = require('connect-pg-simple')
+const pgSession = sessionStore(session)
 
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(cookieParser())
-app.set('view engine', 'ejs')
-
+const SESSION_SECRET = 'my very secret string'
 const PORT = process.env.PORT
 const pool = new Pool()
 
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(session({
+	secret: SESSION_SECRET,
+	resave: false, // if unmodified sessions should be rewritten
+	saveUninitialized: true,
+	store: new (sessionStore(session))({
+		pool: pool
+	}),
+	cookie: {
+		secure: 'auto',
+		maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+	}
+}))
+
+app.set('view engine', 'ejs')
+
 const checkAuthentication = (req, res, next) => {
-	if (!req.user) {
+	if (!req.session || !req.session.authenticated) {
 		res.render('pages/login', {
 			message: `To ${req.method} ${req.path} you need to login.`
 		})
@@ -23,12 +38,6 @@ const checkAuthentication = (req, res, next) => {
 		next()
 	}
 }
-
-app.use((req, res, next) => {
-	const authToken = req.cookies['AuthToken']
-	req.user = authTokens[authToken]
-	next()
-})
 
 app.get('/', (req, res) => {
 	res.render('pages/index')
@@ -50,10 +59,8 @@ app.post('/login', (req, res) => {
 	const { email, password } = req.body
 	validateUser(email, password, (err, user) => {
 		if (user) {
+			req.session.authenticated = true
 			console.log(`User ${user.email} logged in`)
-			const authToken = generateAuthToken()
-			authTokens[authToken] = user
-			res.cookie('AuthToken', authToken)
 			res.redirect('/graph?count=1000')
 		} else {
 			res.render('pages/login', {message: 'Invalid username or password'})
@@ -81,12 +88,6 @@ app.post('/add_user', checkAuthentication, (req, res) => {
 			})
 		})
 })
-
-const authTokens = {} // use other store!
-
-const generateAuthToken = () => {
-	return crypto.randomBytes(30).toString('hex')
-}
 
 const roleConvert = role => {
 	return (role === 'admin') ? 1 : 2
