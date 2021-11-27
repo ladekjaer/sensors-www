@@ -43,9 +43,11 @@ app.use(session({
  */
 
 app.use((req, res, next) => {
-	let now = new Date().toISOString()
-	let user_email = (req.session && req.session.user) ? req.session.user.email : null
-	console.log(`[${now}] ${req.method} ${req.url} by ${user_email}`)
+	if (process.env.NODE_ENV === 'development') {
+		let now = new Date().toISOString()
+		let user_email = (req.session && req.session.user) ? req.session.user.email : null
+		console.log(`[${now}] ${req.method} ${req.url} by ${user_email}`)
+	}
 	next()
 })
 
