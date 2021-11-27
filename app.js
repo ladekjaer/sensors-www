@@ -14,6 +14,16 @@ app.set('view engine', 'ejs')
 const PORT = process.env.PORT
 const pool = new Pool()
 
+const checkAuthentication = (req, res, next) => {
+	if (!req.user) {
+		res.render('pages/login', {
+			message: `To ${req.method} ${req.path} you need to login.`
+		})
+	} else {
+		next()
+	}
+}
+
 app.use((req, res, next) => {
 	const authToken = req.cookies['AuthToken']
 	req.user = authTokens[authToken]
@@ -28,22 +38,12 @@ app.get('/login', (req, res) => {
 	res.render('pages/login', {message: false})
 })
 
-app.get('/add_user', (req, res) => {
-	if (!req.user) {
-		res.render('pages/login', {
-			message: 'Only logged in user can create new users.'
-		})
-		return
-	}
+app.get('/add_user', checkAuthentication, (req, res) => {
 	res.render('pages/add_user', {message: false})
 })
 
-app.get('/graph', (req, res) => {
-	if (req.user) {
-		res.render('pages/graph')
-	} else {
-		res.render('pages/login', {message: 'The graph data is password protected. Please login.'})
-	}
+app.get('/graph', checkAuthentication, (req, res) => {
+	res.render('pages/graph')
 })
 
 app.post('/login', (req, res) => {
@@ -61,13 +61,7 @@ app.post('/login', (req, res) => {
 	})
 })
 
-app.post('/add_user', (req, res) => {
-	if (!req.user) {
-		res.render('pages/login', {
-			message: 'Only logged in user can create new users.'
-		})
-		return
-	}
+app.post('/add_user', checkAuthentication, (req, res) => {
 	const { email, phone, role, password, confirmPassword } = req.body;
 	if (password !== confirmPassword) {
 		res.render('pages/graph', {message: 'Password does not match.'})
@@ -163,25 +157,17 @@ const getHashedPassword = async password => {
 	return hash
 }
 
-app.get('/latest(/:count)?', (req, res) => {
-	if (req.user) {
-		let count = req.params.count || 1
-		pool.query('select * from temperature_view order by capture_time desc limit $1::integer', [count], (err, result) => {
-			res.writeHead(200, {
-				'content-type': 'text/plain; charset=utf8'
-			})
-			res.end(JSON.stringify(result.rows, null, 4))
+app.get('/latest(/:count)?', checkAuthentication, (req, res) => {
+	let count = req.params.count || 1
+	pool.query('select * from temperature_view order by capture_time desc limit $1::integer', [count], (err, result) => {
+		res.writeHead(200, {
+			'content-type': 'text/plain; charset=utf8'
 		})
-	} else {
-		res.redirect('/login')
-		
-	}
+		res.end(JSON.stringify(result.rows, null, 4))
+	})
 })
 
-app.get('/data(/:count)?', (req, res) => {
-	if (!req.user) {
-		return res.redirect('/login')
-	}
+app.get('/data(/:count)?', checkAuthentication, (req, res) => {
 	let count = req.params.count || 10
 	const query = {
 		text: `
