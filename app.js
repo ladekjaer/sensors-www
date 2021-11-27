@@ -63,6 +63,13 @@ app.get('/login', (req, res) => {
 	res.render('pages/login', {message: false})
 })
 
+app.get('/logout', checkAuthentication, (req, res) => {
+	if (!req.session) res.redirect('/')
+	req.session.destroy(err => {
+		res.redirect('/')
+	})
+})
+
 app.get('/add_user', checkAuthentication, (req, res) => {
 	res.render('pages/add_user', {message: false})
 })
