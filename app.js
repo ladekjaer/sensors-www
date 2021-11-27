@@ -39,6 +39,18 @@ app.use(session({
 
 
 /**
+ * -------------- MIDDLEWARE --------------------
+ */
+
+app.use((req, res, next) => {
+	let now = new Date().toISOString()
+	let user_email = (req.session && req.session.user) ? req.session.user.email : null
+	console.log(`[${now}] ${req.method} ${req.url} by ${user_email}`)
+	next()
+})
+
+
+/**
  * -------------- ROUTES ------------------------
  */
 app.get('/', (req, res) => {
@@ -61,7 +73,7 @@ app.post('/login', (req, res) => {
 	const { email, password } = req.body
 	validateUser(email, password, (err, user) => {
 		if (user) {
-			req.session.authenticated = true
+			req.session.user = user
 			console.log(`User ${user.email} logged in`)
 			res.redirect('/graph?count=1000')
 		} else {
@@ -208,7 +220,7 @@ const validateUser = (email, password, callback) => {
  */
 
 function checkAuthentication(req, res, next) {
-	if (!req.session || !req.session.authenticated) {
+	if (!req.session || !req.session.user) {
 		res.render('pages/login', {
 			message: `To ${req.method} ${req.path} you need to login.`
 		})
