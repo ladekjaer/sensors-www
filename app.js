@@ -114,45 +114,24 @@ app.post('/add_user', checkAuthentication, (req, res) => {
 
 app.get('/latest(/:count)?', checkAuthentication, (req, res) => {
 	let count = req.params.count || 1
-	const query = {
-		text: `
-			SELECT
-				*
-			FROM
-				temperature_view
-			ORDER BY
-				capture_time DESC
-			LIMIT $1::integer;`,
-		values: [count]
-	}
-	pool.query(query, (err, result) => {
-		res.writeHead(200, {
-			'content-type': 'text/plain; charset=utf8'
-		})
-		res.end(JSON.stringify(result.rows, null, 4))
+	getLatest(count, (err, data) => {
+		if (err) {
+			console.error(err)
+			return res.status(500).send('Unable to retrieve data from database.')
+		}
+		res.type('json').end(JSON.stringify(data, null, 4))
 	})
 })
 
 app.get('/data(/:count)?', checkAuthentication, (req, res) => {
 	let count = req.params.count || 10
-	const query = {
-		text: `
-			SELECT
-				place, capture_time, temperature
-			FROM
-				temperature_view
-			ORDER BY
-				capture_time DESC
-			LIMIT $1::integer`,
-		values: [count]
-	}
-	pool.query(query, (err, result) => {
+	getData(count, (err, data) => {
 		if (err) {
 			console.error(err)
 			return res.status(500).send('Unable to retrieve data from database.')
 		}
 		let thermdata = {}
-		result.rows.forEach((row, index) => {
+		data.forEach((row) => {
 			let measure = {
 				x: new Date(row.capture_time),
 				y: row.temperature
@@ -172,6 +151,46 @@ app.use((req, res, next) => {
 /**
  * -------------- DATABASE ----------------------
  */
+
+const getLatest = (count, callback) => {
+	const query = {
+		text: `
+			SELECT
+				*
+			FROM
+				temperature_view
+			ORDER BY
+				capture_time DESC
+			LIMIT $1::integer;`,
+		values: [count]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			return callback(err)
+		}
+		return callback(null, result.rows)
+	})
+}
+
+const getData = (count, callback) => {
+	const query = {
+		text: `
+			SELECT
+				place, capture_time, temperature
+			FROM
+				temperature_view
+			ORDER BY
+				capture_time DESC
+			LIMIT $1::integer`,
+		values: [count]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			return callback(err)
+		}
+		return callback(null, result.rows)
+	})
+ }
 
 const addUser = (email, phone, role, hashedPassword, callback) => {
 	let role_id = roleConvert(role)
