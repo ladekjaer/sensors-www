@@ -254,7 +254,9 @@ async function getHashedPassword(password) {
 }
 
 function roleConvert(role) {
-	return (role === 'admin') ? 1 : 2
+	if (typeof role === 'string') return (role === 'admin') ? 1 : 2;
+	if (typeof role === 'number') return (role === 1) ? 'admin' : 'user';
+	throw new TypeError
 }
 
 
