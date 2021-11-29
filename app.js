@@ -78,6 +78,12 @@ app.get('/graph', checkAuthentication, (req, res) => {
 	res.render('pages/graph')
 })
 
+app.get('/access_keys', checkAuthentication, (req, res) => {
+	getAccessKeys((err, accessKeys) => {
+		res.render('pages/access_keys', {accessKeys: accessKeys})
+	})
+})
+
 app.post('/login', (req, res) => {
 	const { email, password } = req.body
 	validateUser(email, password, (err, user) => {
@@ -213,6 +219,31 @@ const getDataForUser = (count, user_id, callback) => {
 				capture_time DESC
 			LIMIT $1::integer;`,
 		values: [count, user_id]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			return callback(err)
+		}
+		return callback(null, result.rows)
+	})
+}
+
+const getAccessKeys = (callback) => {
+	const query = {
+		text: `
+			SELECT
+				u.user_id
+				, u.email
+				, u.role_id
+				, r.role
+				, ak.key_id
+				, ak.key
+				, ak.creation_time
+			FROM
+				access_keys ak
+				LEFT JOIN users u ON u.user_id = ak.owner_id
+				LEFT JOIN roles r ON r.role_id = u.role_id;`,
+		values: []
 	}
 	pool.query(query, (err, result) => {
 		if (err) {

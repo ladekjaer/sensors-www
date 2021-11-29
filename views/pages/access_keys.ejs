@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	 <%- include('../partials/head'); %>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body class="container">
+	<header>
+		<%- include('../partials/header'); %>
+	</header>
+
+	<main>
+		<div class="jumbotron">
+<!--			<div class="row justify-content-md-center">-->
+			 <div>
+<!--				<div class="col-md-6">-->
+				<div>
+
+					<% if (typeof message !== 'undefined' && message) { %>
+						<div class="alert {{messageClass}}" role="alert">
+							<%= message %>
+						</div>
+					<% } %>
+
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th colspan="4">List of access keys</th>
+							</tr>
+							<tr>
+								<th>User</th>
+								<th>Role</th>
+								<th>Key (first 20 chars)</th>
+								<th>Creation Time</th>
+							</tr>
+						</thead>
+						<tbody>
+						<% accessKeys.forEach(key => { %>
+							<tr>
+								<td><%= key.email %></td>
+								<td><%= key.role %></td>
+								<td><%= key.key.substring(0,20) %> <button class="btn-<%= key.key_id %>">Copy</button></td>
+								<td><%= key.creation_time.toISOString() %>
+							</tr>
+						<% }); %>
+						</tbody>
+					</table>
+
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<footer>
+		<%- include('../partials/footer'); %>
+	</footer>
+	<script type="text/javascript">
+	<% accessKeys.forEach(key => { %>
+		const btn<%= key.key_id %> = document.querySelector('.btn-<%= key.key_id %>');
+		btn<%= key.key_id %>.addEventListener('click', () => {
+			navigator.clipboard.writeText('<%= key.key %>')
+				.then(() => {
+					 alert('<%= key.key %>\n\nCopied to clipboard!');
+				})
+				.catch(err => {
+					console.log('Unable to copy access key', err);
+				})
+		});
+	<% }); %>
+	</script>
+</body>
+</html>
