@@ -125,7 +125,7 @@ app.get('/latest(/:count)?', checkAuthentication, (req, res) => {
 
 app.get('/data(/:count)?', checkAuthentication, (req, res) => {
 	let count = req.params.count || 10
-	getData(count, (err, data) => {
+	getDataForUser(count, req.session.user.user_id, (err, data) => {
 		if (err) {
 			console.error(err)
 			return res.status(500).send('Unable to retrieve data from database.')
@@ -191,6 +191,36 @@ const getData = (count, callback) => {
 		return callback(null, result.rows)
 	})
  }
+
+const getDataForUser = (count, user_id, callback) => {
+	const query = {
+		text: `
+			SELECT
+				place, capture_time, temperature
+			FROM
+				temperature_view
+			WHERE
+				thermometer_id in (
+					SELECT
+						thermometer_id
+					FROM
+						sensors s
+						JOIN sensors_users su ON s.sensor_id = su.sensor_id
+					WHERE
+						su.user_id = $2::integer
+				)
+			ORDER BY
+				capture_time DESC
+			LIMIT $1::integer;`,
+		values: [count, user_id]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			return callback(err)
+		}
+		return callback(null, result.rows)
+	})
+}
 
 const addUser = (email, phone, role, hashedPassword, callback) => {
 	let role_id = roleConvert(role)
