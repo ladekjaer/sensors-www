@@ -70,7 +70,7 @@ app.get('/logout', checkAuthentication, (req, res) => {
 	})
 })
 
-app.get('/add_user', checkAuthentication, (req, res) => {
+app.get('/add_user', checkAuthenticationAsAdmin, (req, res) => {
 	res.render('pages/add_user', {message: false})
 })
 
@@ -78,7 +78,7 @@ app.get('/graph', checkAuthentication, (req, res) => {
 	res.render('pages/graph')
 })
 
-app.get('/access_keys', checkAuthentication, (req, res) => {
+app.get('/access_keys', checkAuthenticationAsAdmin, (req, res) => {
 	getAccessKeys((err, accessKeys) => {
 		res.render('pages/access_keys', {accessKeys: accessKeys})
 	})
@@ -316,6 +316,20 @@ function checkAuthentication(req, res, next) {
 	if (!req.session || !req.session.user) {
 		res.render('pages/login', {
 			message: `To ${req.method} ${req.path} you need to login.`
+		})
+	} else {
+		next()
+	}
+}
+
+function checkAuthenticationAsAdmin(req, res, next) {
+	if (!req.session || !req.session.user) {
+		res.render('pages/login', {
+			message: `To ${req.method} ${req.path} you need to login.`
+		})
+	} else if (req.session.user.role !== 'admin') {
+		res.render('pages/login', {
+			message: `To ${req.method} ${req.path} is only allowed for administrators.`
 		})
 	} else {
 		next()
