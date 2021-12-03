@@ -144,6 +144,17 @@ app.post('/add_user', checkAuthentication, (req, res) => {
 		})
 })
 
+app.get('/latest_from_each', checkAuthenticationAsAdmin, (req, res) => {
+	getLatestFromEachSensor((err, temperatures) => {
+		if (err) {
+			console.error(err)
+			return res.status(500).send('Unable to retrieve wanted data from database.')
+		}
+		// res.json(temperatures) // This is harder to parse for humans
+		res.type('json').end(JSON.stringify(temperatures, null, 4))
+	})
+})
+
 app.get('/latest(/:count)?', checkAuthentication, (req, res) => {
 	let count = req.params.count || 1
 	getLatest(count, (err, data) => {
@@ -195,6 +206,37 @@ const getLatest = (count, callback) => {
 				capture_time DESC
 			LIMIT $1::integer;`,
 		values: [count]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			return callback(err)
+		}
+		return callback(null, result.rows)
+	})
+}
+
+const getLatestFromEachSensor = (callback) => {
+	const query = {
+		text: `
+			SELECT
+				t.temperature_id
+				, hostname
+				, address
+				, place
+				, t.thermometer_id
+				, pi_id
+				, capture_time
+				, temperature
+			FROM temperature t
+				LEFT JOIN sensors s ON s.thermometer_id = t.thermometer_id
+				LEFT JOIN addresses a ON a.address_id = s.address_id
+			WHERE temperature_id in
+					(SELECT MAX(temperature_id)
+						FROM temperature
+						GROUP BY thermometer_id)
+			ORDER BY
+				pi_id, place;`,
+		values: []
 	}
 	pool.query(query, (err, result) => {
 		if (err) {
