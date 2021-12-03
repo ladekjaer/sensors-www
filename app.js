@@ -80,7 +80,33 @@ app.get('/graph', checkAuthentication, (req, res) => {
 
 app.get('/access_keys', checkAuthenticationAsAdmin, (req, res) => {
 	getAccessKeys((err, accessKeys) => {
-		res.render('pages/access_keys', {accessKeys: accessKeys})
+		getUsers((err, users) => {
+			res.render('pages/access_keys', {accessKeys: accessKeys, users: users})
+		})
+	})
+})
+
+app.post('/add_access_key', checkAuthenticationAsAdmin, (req, res) => {
+	console.log(req.body)
+	let { user_email, accessKey } = req.body
+	if (!accessKey) accessKey = createAccessKey();
+
+	getUser(user_email, (err, user) => {
+		if (err) {
+			console.error('Unable to look up user')
+			return res.redirect('/access_keys') // redirect to some 4xx/5xx
+		}
+		console.log(user)
+		addAccessKeys(user, accessKey, (err, add_time) => {
+			if (err) {
+				console.error('Unable to add access key')
+				console.error(err)
+				return res.redirect('/access_keys') // redirect to some 4xx/5xx
+			}
+			console.log(`Access key added for user ${user.email} at ${add_time}`)
+			res.redirect('/access_keys')
+		})
+
 	})
 })
 
@@ -253,6 +279,72 @@ const getAccessKeys = (callback) => {
 	})
 }
 
+const addAccessKeys = (user, accessKey, callback) => {
+	if (!user) return callback('No user')
+	const query = {
+		text: `
+			INSERT INTO access_keys
+				(owner_id
+				, key)
+			VALUES
+				($1::integer, $2::text)
+			RETURNING creation_time;`,
+		values: [user.user_id, accessKey]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			return callback(err)
+		}
+		return callback(null, result.rows[0].creation_time)
+	})
+}
+
+const getUser = (email, callback) => {
+	const query = {
+		text: `
+			SELECT
+				user_id
+				, email
+				, phone
+				, role_id
+			FROM
+				users
+			WHERE
+				email = $1::text;`,
+		values: [email]
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			console.error(err)
+			return callback(err)
+		}
+		const user = result.rows[0]
+		return callback(null, user)
+	})
+}
+
+const getUsers = callback => {
+	const query = {
+		text: `
+			SELECT
+				u.user_id
+				, u.email
+				, u.phone
+				, r.role
+			FROM
+				users u
+				JOIN roles r ON r.role_id = u.role_id;`,
+		values: []
+	}
+	pool.query(query, (err, result) => {
+		if (err) {
+			console.error(err)
+			return callback(err)
+		}
+		return callback(null, result.rows)
+	})
+}
+
 const addUser = (email, phone, role, hashedPassword, callback) => {
 	let role_id = roleConvert(role)
 	const query = {
@@ -345,6 +437,11 @@ async function getHashedPassword(password) {
 		return err
 	}
 	return hash
+}
+
+function createAccessKey() {
+	const key_length = 100
+	return crypto.randomBytes(key_length).toString('base64').slice(0, key_length)
 }
 
 function roleConvert(role) {

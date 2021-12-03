@@ -46,6 +46,24 @@
 						</tbody>
 					</table>
 
+					<form method="post" action="/add_access_key">
+						<div class="form-group">
+							<label for="userInput">User</label>
+							<input name="user_email" type="email" class="form-control" id="userInput" list="userDatalist" required>
+						</div>
+						<div class="form-group">
+							<label for=keyInput>Access Key</label>
+							<input name=accessKey type="text" class="form-control" id="keyInput" placeholder="Leave blank for server generated key (this is recommended)">
+						</div>
+						<button type="submit" class="btn btn-primary">Create access key</button>
+					</form>
+
+					<datalist id="userDatalist">
+					<% users.forEach(user => { %>
+						<option value="<%= user.email %>">
+					<% }); %>
+					</datalist>
+
 				</div>
 			</div>
 		</div>
