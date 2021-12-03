@@ -94,6 +94,7 @@ app.post('/add_access_key', checkAuthenticationAsAdmin, (req, res) => {
 	getUser(user_email, (err, user) => {
 		if (err) {
 			console.error('Unable to look up user')
+			app.locals.message = `Unable to look up user ${user_email}.`
 			return res.redirect('/access_keys') // redirect to some 4xx/5xx
 		}
 		console.log(user)
@@ -101,12 +102,13 @@ app.post('/add_access_key', checkAuthenticationAsAdmin, (req, res) => {
 			if (err) {
 				console.error('Unable to add access key')
 				console.error(err)
+				app.locals.message = `Unable to add access key for user ${user.email}.`
 				return res.redirect('/access_keys') // redirect to some 4xx/5xx
 			}
 			console.log(`Access key added for user ${user.email} at ${add_time}`)
+			app.locals.message = `Access key added for user ${user.email} at ${add_time.toISOString()}.`
 			res.redirect('/access_keys')
 		})
-
 	})
 })
 
