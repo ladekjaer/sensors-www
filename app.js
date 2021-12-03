@@ -306,6 +306,7 @@ const getAccessKeys = (callback) => {
 				, r.role
 				, ak.key_id
 				, ak.key
+				, ak.status
 				, ak.creation_time
 			FROM
 				access_keys ak

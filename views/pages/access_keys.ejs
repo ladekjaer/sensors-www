@@ -31,6 +31,7 @@
 								<th>User</th>
 								<th>Role</th>
 								<th>Key (first 20 chars)</th>
+								<th>Status</th>
 								<th>Creation Time</th>
 							</tr>
 						</thead>
@@ -40,6 +41,7 @@
 								<td><%= key.email %></td>
 								<td><%= key.role %></td>
 								<td class="font-monospace"><%= key.key.substring(0,20) %> <button class="btn-<%= key.key_id %>">Copy</button></td>
+								<td><%= key.status %></td>
 								<td><%= key.creation_time.toISOString() %>
 							</tr>
 						<% }); %>
