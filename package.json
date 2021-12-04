@@ -1,6 +1,6 @@
 {
   "name": "sensors-www",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Show data committed to database by sensors-api.",
   "main": "app.js",
   "scripts": {
