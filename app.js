@@ -51,6 +51,10 @@ app.use((req, res, next) => {
 	next()
 })
 
+app.use((req, res, next) => {
+	setLoggedinStatus(req, res, next)
+})
+
 
 /**
  * -------------- ROUTES ------------------------
@@ -65,6 +69,8 @@ app.get('/login', (req, res) => {
 
 app.get('/logout', checkAuthentication, (req, res) => {
 	if (!req.session) res.redirect('/')
+
+	// Actual logout
 	req.session.destroy(err => {
 		res.redirect('/')
 	})
@@ -79,11 +85,7 @@ app.get('/graph', checkAuthentication, (req, res) => {
 })
 
 app.get('/access_keys', checkAuthenticationAsAdmin, (req, res) => {
-	getAccessKeys((err, accessKeys) => {
-		getUsers((err, users) => {
-			res.render('pages/access_keys', {accessKeys: accessKeys, users: users})
-		})
-	})
+	renderAccessKeysPage(req, res)
 })
 
 app.post('/add_access_key', checkAuthenticationAsAdmin, (req, res) => {
@@ -95,19 +97,19 @@ app.post('/add_access_key', checkAuthenticationAsAdmin, (req, res) => {
 		if (err) {
 			console.error('Unable to look up user')
 			app.locals.message = `Unable to look up user ${user_email}.`
-			return res.redirect('/access_keys') // redirect to some 4xx/5xx
+			return renderAccessKeysPage(req, res) // redirect to some 4xx/5xx?
 		}
 		console.log(user)
 		addAccessKeys(user, accessKey, (err, add_time) => {
 			if (err) {
 				console.error('Unable to add access key')
 				console.error(err)
-				app.locals.message = `Unable to add access key for user ${user.email}.`
-				return res.redirect('/access_keys') // redirect to some 4xx/5xx
+				res.locals.message = `Unable to add access key for user ${user.email}.`
+				return renderAccessKeysPage(req, res) // redirect to some 4xx/5xx?
 			}
 			console.log(`Access key added for user ${user.email} at ${add_time}`)
-			app.locals.message = `Access key added for user ${user.email} at ${add_time.toISOString()}.`
-			res.redirect('/access_keys')
+			res.locals.message = `Access key added for user ${user.email} at ${add_time.toISOString()}.`
+			renderAccessKeysPage(req, res)
 		})
 	})
 })
@@ -116,6 +118,7 @@ app.post('/login', (req, res) => {
 	const { email, password } = req.body
 	validateUser(email, password, (err, user) => {
 		if (user) {
+			// Login
 			req.session.user = user
 			console.log(`User ${user.email} logged in`)
 			res.redirect('/graph?count=1000')
@@ -449,6 +452,14 @@ const validateUser = (email, password, callback) => {
  * -------------- HELPER FUNCTIONS --------------
  */
 
+ function renderAccessKeysPage(req, res, next) {
+ 	getAccessKeys((err, accessKeys) => {
+		getUsers((err, users) => {
+			res.render('pages/access_keys', {accessKeys: accessKeys, users: users})
+		})
+	})
+ }
+
 function checkAuthentication(req, res, next) {
 	if (!req.session || !req.session.user) {
 		res.render('pages/login', {
@@ -471,6 +482,20 @@ function checkAuthenticationAsAdmin(req, res, next) {
 	} else {
 		next()
 	}
+}
+
+function setLoggedinStatus(req, res, next) {
+	if (req.session && req.session.user) {
+		res.locals.loggedin = true
+	} else {
+		delete app.locals.loggedin
+	}
+	if (req.session && req.session.user && req.session.user.role === 'admin') {
+		res.locals.adminloggedin = true
+	} else {
+		delete app.locals.adminloggedin
+	}
+	next()
 }
 
 async function getHashedPassword(password) {

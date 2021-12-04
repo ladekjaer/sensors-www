@@ -4,23 +4,35 @@
 		<li class="nav-item">
 			<a class="nav-link" href="/">Home</a>
 		</li>
+	<% if (typeof loggedin !== 'undefined' && loggedin) { %>
 		<li class="nav-item">
 			<a class="nav-link"  href="/latest">Latest</a>
 		</li>
+	<% } %>
+	<% if (typeof loggedin !== 'undefined' && loggedin) { %>
 		<li class="nav-item">
 			<a class="nav-link" href="/graph">Graph</a>
 		</li>
+	<% } %>
+	<% if (typeof adminloggedin !== 'undefined' && adminloggedin) { %>
 		<li class="nav-item">
 			<a class="nav-link" href="/add_user">Add User</a>
 		</li>
+	<% } %>
+	<% if (typeof adminloggedin !== 'undefined' && adminloggedin) { %>
 		<li class="nav-item">
 			<a class="nav-link" href="/access_keys">Access Keys</a>
 		</li>
+	<% } %>
+	<% if (typeof loggedin === 'undefined' || !loggedin) { %>
 		<li class="nav-item">
 			<a class="nav-link" href="/login">Login</a>
 		</li>
+	<% } %>
+	<% if (typeof loggedin !== 'undefined' && loggedin) { %>
 		<li class="nav-item">
 			<a class="nav-link" href="/logout">Log out</a>
 		</li>
+	<% } %>
 	</ul>
 </nav>
