@@ -96,7 +96,7 @@ app.post('/add_access_key', checkAuthenticationAsAdmin, (req, res) => {
 	getUser(user_email, (err, user) => {
 		if (err) {
 			console.error('Unable to look up user')
-			app.locals.message = `Unable to look up user ${user_email}.`
+			res.locals.message = `Unable to look up user ${user_email}.`
 			return renderAccessKeysPage(req, res) // redirect to some 4xx/5xx?
 		}
 		console.log(user)
@@ -488,12 +488,12 @@ function setLoggedinStatus(req, res, next) {
 	if (req.session && req.session.user) {
 		res.locals.loggedin = true
 	} else {
-		delete app.locals.loggedin
+		delete res.locals.loggedin
 	}
 	if (req.session && req.session.user && req.session.user.role === 'admin') {
 		res.locals.adminloggedin = true
 	} else {
-		delete app.locals.adminloggedin
+		delete res.locals.adminloggedin
 	}
 	next()
 }
