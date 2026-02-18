@@ -1,5 +1,7 @@
 # Sensors WWW
 
+**NB: This project has been deprecated.**
+
 This webapp is the WWW server to show the data delievered to [Sensors API](https://github.com/ladekjaer/sensors-api) in graphical form in the browser.
 
 ## Setup
